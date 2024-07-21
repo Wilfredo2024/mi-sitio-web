@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscar Ventas</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #343a40;
+        }
+        form {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        form label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        form input[type="date"], form button {
+            margin: 5px 0;
+        }
+        form button {
+            padding: 6px 12px;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        form button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        table th {
+            background-color: #343a40;
+            color: white;
+        }
+        table tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        table td button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        table td button:hover {
+            background-color: #d32f2f;
+        }
+        .total {
+            text-align: right;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .message {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .message.success {
+            color: green;
+        }
+        .message.error {
+            color: red;
+        }
+        .actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .actions a {
+            margin: 5px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .actions a:hover {
+            background-color: #218838;
+        }
+        @media (max-width: 576px) {
+            .container {
+                padding: 15px;
+            }
+            table th, table td {
+                padding: 8px;
+            }
+            .total {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Buscar Ventas</h1>
+        
+        <form action="{{ url_for('buscar_ventas') }}" method="POST" id="buscar-form">
+            <label for="fecha">Buscar por Fecha:</label>
+            <input type="date" id="fecha" name="fecha" class="form-control">
+            <input type="hidden" name="pin" value="210501">
+            <button type="submit" class="btn btn-primary">Buscar</button>
+        </form>
+
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre Producto</th>
+                    <th>Precio Unitario</th>
+                    <th>Cantidad</th>
+                    <th>Total</th>
+                    <th>Fecha de Venta</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="ventas-table-body">
+                {% for venta in data %}
+                <tr id="venta-{{ venta.id }}">
+                    <td>{{ venta.id }}</td>
+                    <td>{{ venta.nombre_producto }}</td>
+                    <td>{{ venta.precio }}</td>
+                    <td>{{ venta.cantidad }}</td>
+                    <td>{{ venta.total }}</td>
+                    <td>{{ venta.fecha_venta }}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm eliminar-btn" data-id="{{ venta.id }}">Eliminar</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="total">Total vendido: <span id="total-vendido">{{ total_vendido }}</span></div>
+
+        <div class="message">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="message {% if 'success' in message %}success{% elif 'error' in message %}error{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="actions">
+            <a href="{{ url_for('index') }}">Volver al Inicio</a>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var fechaInput = document.getElementById('fecha');
+
+            // Recuperar fecha de localStorage si existe
+            if (localStorage.getItem('fecha')) {
+                fechaInput.value = localStorage.getItem('fecha');
+            }
+
+            // Guardar fecha en localStorage al enviar el formulario
+            document.getElementById('buscar-form').addEventListener('submit', function() {
+                localStorage.setItem('fecha', fechaInput.value);
+            });
+
+            // Manejar la eliminación con AJAX
+            var eliminarBtns = document.querySelectorAll('.eliminar-btn');
+            eliminarBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var ventaId = this.getAttribute('data-id');
+                    var pin = "210501"; // Pin value
+                    if (confirm('¿Estás seguro de que deseas eliminar esta venta?')) {
+                        $.ajax({
+                            url: '/eliminar/' + ventaId,
+                            method: 'POST',
+                            data: { pin: pin },
+                            success: function(response) {
+                                // Eliminar la fila de la tabla
+                                $('#venta-' + ventaId).remove();
+                                // Actualizar el total vendido
+                                $('#total-vendido').text(response.total_vendido);
+                            },
+                            error: function(xhr) {
+                                alert('Error al eliminar la venta. Por favor, inténtelo de nuevo.');
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Venta</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-image: linear-gradient(to right, #43cea2, #185a9d);
+            color: #333;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="number"], select {
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button[type="button"], button[type="submit"] {
+            padding: 12px 25px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button[type="button"]:hover, button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            max-height: 150px; /* Establece una altura máxima para la lista */
+            overflow-y: auto; /* Agrega un desplazamiento vertical si la lista es muy larga */
+        }
+
+        li {
+            margin-bottom: 12px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .eliminar {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .eliminar:hover {
+            background-color: #e53935;
+        }
+
+        .resultado {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .mensaje {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .success {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .danger {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .vuelto-section {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e0f2f1;
+            border-radius: 5px;
+        }
+
+        .vuelto {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Registro de Venta</h2>
+        <form action="{{ url_for('registrar_venta') }}" method="POST">
+            <label for="buscar-producto">Buscar Producto:</label>
+            <input type="text" id="buscar-producto" onkeyup="filtrarProductos()" placeholder="Buscar producto...">
+            <label for="producto">Producto:</label>
+            <select id="producto" name="producto" onchange="mostrarPrecio()">
+                {% for producto in productos %}
+                <option value="{{ producto.id }}" data-precio="{{ producto.precio }}">{{ producto.nombre_producto }} - {{ producto.precio }}</option>
+                {% endfor %}
+            </select>
+            <label for="precio">Precio:</label>
+            <input type="text" id="precio" name="precio">
+            <label for="cantidad">Cantidad:</label>
+            <input type="number" id="cantidad">
+            <button type="button" onclick="agregarProducto()">Agregar Producto <i class="fas fa-cart-plus"></i></button>
+            <ul id="lista-productos">
+                <!-- Aquí se agregarán dinámicamente los productos -->
+            </ul>
+            <div class="resultado">
+                Total de la Venta: <span id="total">0.00</span>
+                <input type="hidden" id="total_venta" name="total_venta" value="0.00"> <!-- Campo oculto para enviar el total -->
+            </div>
+            <label for="efectivo">Efectivo Recibido:</label>
+            <input type="number" id="efectivo" name="efectivo" step="any">
+            <button type="button" onclick="calcularVuelto()">Calcular Vuelto <i class="fas fa-coins"></i></button>
+            <div class="vuelto-section" id="vuelto-section" style="display: none;">
+                Vuelto: <span id="vuelto">0.00</span>
+                <input type="hidden" id="vuelto_calculado" name="vuelto_calculado" value="0.00"> <!-- Campo oculto para enviar el vuelto -->
+            </div>
+            <br>
+            <button type="submit">Registrar Venta <i class="fas fa-check-circle"></i></button>
+        </form>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="mensaje {{ category }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <!-- Botón para volver al inicio -->
+        <a href="{{ url_for('index') }}" class="btn"><i class="fas fa-arrow-left"></i> Volver al Inicio</a>
+    </div>
+
+    <script>
+        function mostrarPrecio() {
+            var productoSeleccionado = document.getElementById('producto');
+            var precio = productoSeleccionado.options[productoSeleccionado.selectedIndex].getAttribute('data-precio');
+            document.getElementById('precio').value = precio;
+        }
+
+        function agregarProducto() {
+            var productoSeleccionado = document.getElementById('producto');
+            var productoId = productoSeleccionado.value;
+            var productoNombre = productoSeleccionado.options[productoSeleccionado.selectedIndex].text.split(' - ')[0];
+            var precioProducto = parseFloat(document.getElementById('precio').value);
+            var cantidad = parseInt(document.getElementById('cantidad').value);
+
+            if (isNaN(precioProducto) || isNaN(cantidad)) {
+                alert('Ingrese una cantidad válida.');
+                return;
+            }
+
+            var totalProducto = precioProducto * cantidad;
+
+            var listItem = document.createElement('li');
+            listItem.setAttribute('data-id', productoId);
+            listItem.innerHTML = `
+                <span>${productoNombre} - Cantidad: ${cantidad} - Total: ${totalProducto.toFixed(2)}</span>
+                <button type="button" class="eliminar" onclick="eliminarProducto('${productoId}')">Eliminar <i class="fas fa-trash-alt"></i></button>
+                <input type="hidden" name="productos_vendidos[]" value="${productoId},${cantidad},${precioProducto}">
+            `;
+
+            document.getElementById('lista-productos').appendChild(listItem);
+            calcularTotal();
+
+            // Limpiar los campos de producto, precio y cantidad
+            productoSeleccionado.selectedIndex = 0;
+            document.getElementById('precio').value = "";
+            document.getElementById('cantidad').value = "";
+        }
+
+        function calcularTotal() {
+            var productos = document.getElementsByName('productos_vendidos[]');
+            var total = 0;
+            for (var i = 0; i < productos.length; i++) {
+                var infoProducto = productos[i].value.split(',');
+                var cantidad = parseInt(infoProducto[1]);
+                var precioProducto = parseFloat(infoProducto[2]);
+                total += cantidad * precioProducto;
+            }
+            document.getElementById('total').textContent = total.toFixed(2);
+            document.getElementById('total_venta').value = total.toFixed(2);
+        }
+
+        function calcularVuelto() {
+            var efectivo = parseFloat(document.getElementById('efectivo').value);
+            var totalVenta = parseFloat(document.getElementById('total').textContent);
+            if (isNaN(efectivo) || efectivo < totalVenta) {
+                alert('El efectivo recibido no puede ser menor que el total de la venta.');
+                return;
+            }
+            var vuelto = efectivo - totalVenta;
+            document.getElementById('vuelto').textContent = vuelto.toFixed(2);
+            document.getElementById('vuelto_calculado').value = vuelto.toFixed(2);
+            document.getElementById('vuelto-section').style.display = 'block';
+        }
+
+        function eliminarProducto(productoId) {
+            var listaProductos = document.getElementById('lista-productos');
+            var items = listaProductos.getElementsByTagName('li');
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].getAttribute('data-id') == productoId) {
+                    listaProductos.removeChild(items[i]);
+                    break;
+                }
+            }
+            calcularTotal();
+        }
+
+        function filtrarProductos() {
+            var input = document.getElementById('buscar-producto');
+            var filter = input.value.toLowerCase();
+            var opciones = document.getElementById('producto').options;
+            for (var i = 0; i < opciones.length; i++) {
+                var texto = opciones[i].text.toLowerCase();
+                if (texto.includes(filter)) {
+                    opciones[i].style.display = '';
+                } else {
+                    opciones[i].style.display = 'none';
+                }
+            }
+        }
+    </script>
+</body>
+</html>

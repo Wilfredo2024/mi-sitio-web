@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio - Control de Ventas</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #343a40;
+        }
+        h1 {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .btn {
+            margin: 5px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #495057;
+            border-color: #495057;
+        }
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        .alert-info {
+            margin-top: 20px;
+        }
+        form {
+            margin-bottom: 30px;
+        }
+        .table-responsive {
+            margin-top: 20px;
+        }
+        .table thead {
+            background-color: #007bff;
+            color: #ffffff;
+        }
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        .table-bordered th, .table-bordered td {
+            border: 1px solid #dee2e6;
+        }
+        .table thead th {
+            border-bottom: 2px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bienvenido a Control de Ventas</h1>
+        <div class="text-center mt-4">
+            <a href="{{ url_for('agregar_producto') }}" class="btn btn-primary">Agregar Producto</a>
+            <a href="{{ url_for('catalogo') }}" class="btn btn-secondary">Ver Catálogo de Precios</a>
+            <a href="{{ url_for('registrar_venta') }}" class="btn btn-success">Registrar Venta</a>
+        </div>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-info mt-4">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <hr>
+        <h2>Buscar Ventas</h2>
+        <form action="{{ url_for('buscar_ventas') }}" method="post" class="mb-4">
+            <div class="form-group">
+                <label for="pin">Ingrese PIN:</label>
+                <input type="password" class="form-control" id="pin" name="pin" required>
+            </div>
+            <div class="form-group">
+                <label for="fecha">Fecha:</label>
+                <input type="date" class="form-control" id="fecha" name="fecha">
+            </div>
+            <div class="form-group">
+                <label for="mostrar_todo">Mostrar Todo:</label>
+                <input type="checkbox" id="mostrar_todo" name="mostrar_todo">
+            </div>
+            <button type="submit" class="btn btn-secondary btn-block">Buscar</button>
+        </form>
+        {% if data %}
+        <h2>Resultados</h2>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre del Producto</th>
+                        <th>Precio</th>
+                        <th>Cantidad</th>
+                        <th>Total</th>
+                        <th>Fecha de Venta</th>
+                        <th>Hora de Venta</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data %}
+                    <tr>
+                        <td>{{ row.id }}</td>
+                        <td>{{ row.nombre_producto }}</td>
+                        <td>{{ row.precio }}</td>
+                        <td>{{ row.cantidad }}</td>
+                        <td>{{ row.total }}</td>
+                        <td>{{ row.fecha_venta }}</td>
+                        <td>{{ row.hora_venta }}</td>
+                        <td>
+                            <form action="{{ url_for('eliminar', id=row.id) }}" method="post">
+                                <input type="hidden" name="pin" value="{{ request.form.pin }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <h3 class="text-center">Total Vendido: {{ total_vendido }} Córdobas</h3>
+        {% endif %}
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
